@@ -25,7 +25,6 @@ public class CustomerOrder {
 
     Double total;
 
-    Boolean isFree;
 
     @ManyToOne
     @JoinColumn(name = "customer_id")

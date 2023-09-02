@@ -14,8 +14,4 @@ public interface CustomerOrderService {
 
     CustomerOrderResponseDTO save(CustomerOrderRequestDTO customerOrderRequestDTO);
 
-//    CustomerOrderResponseDTO create(CustomerOrderRequestDTO customerOrderRequestDTO);
-
-    Double getTax(Integer year, Month month);
-
 }

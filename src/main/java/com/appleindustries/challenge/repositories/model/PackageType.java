@@ -19,5 +19,5 @@ public class PackageType {
 
     String name;
 
-    int price;
+    Double price;
 }

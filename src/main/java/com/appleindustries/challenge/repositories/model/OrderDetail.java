@@ -26,4 +26,6 @@ public class OrderDetail {
     @JoinColumn(name = "package_type_id")
     PackageType packageType;
 
+    Double price;
+
 }

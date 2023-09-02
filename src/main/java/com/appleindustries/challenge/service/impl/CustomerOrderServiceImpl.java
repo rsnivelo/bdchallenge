@@ -14,6 +14,7 @@ import com.appleindustries.challenge.service.mapper.PackageTypeMapper;
 import com.appleindustries.challenge.service.model.CustomerOrderRequestDTO;
 import com.appleindustries.challenge.service.model.CustomerOrderResponseDTO;
 import com.appleindustries.challenge.service.model.OrderDetailDTO;
+import jakarta.persistence.criteria.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -52,10 +53,10 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         Optional<Customer> customer = customerRepository.findById(customerOrderRequestDTO.getCustomerId());
 
         if (customer.isPresent()) {
+            Optional<PackageType> packageType = packageTypeRepository.findById(customerOrderRequestDTO.getPackageId());
             LocalDateTime creationTime = LocalDateTime.now(clock);
             CustomerOrder order = CustomerOrder.builder()
                     .creationDate(creationTime)
-                    .total(customerOrderRequestDTO.getPackageType().getPrice())
                     .customer(customer.get())
                     .build();
 
@@ -64,17 +65,23 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
 
             if (lastCustomerOrder.isPresent()) {
                 if (lastCustomerOrder.get().getCreationDate().getHour() == creationTime.getHour()) {
-                    OrderDetail orderDetail = OrderDetail.builder().packageType(packageTypeMapper.mapToEntity(customerOrderRequestDTO.getPackageType())).build();
-                    return customerOrderMapper.mapToCustomerOrderResponse(order, Arrays.asList(customerOrderMapper.mapToOrderDetail(customerOrderRequestDTO.getPackageType(), orderDetailRepository.save(orderDetail).getId())));
+                    OrderDetail orderDetail = OrderDetail.builder().order(order).packageType(packageType.get()).price(packageType.get().getPrice()).build();
+                    return customerOrderMapper.mapToCustomerOrderResponse(order, Arrays.asList(customerOrderMapper.mapToOrderDetail(packageType.get(),
+                            orderDetailRepository.save(orderDetail).getId())));
                 }
             }
 
             List<PackageType> packageTypes = packageTypeRepository.findAll();
             List<OrderDetailDTO> orderDetailDTOList = new ArrayList<>();
 
-            for (PackageType packageType: packageTypes) {
-                OrderDetail orderDetail = OrderDetail.builder().order(order).packageType(packageType).build();
-                orderDetailDTOList.add(customerOrderMapper.mapToOrderDetail(packageType, orderDetailRepository.save(orderDetail).getId()));
+            for (PackageType pkg: packageTypes) {
+                OrderDetail orderDetail;
+                if (pkg.getId().equals(customerOrderRequestDTO.getPackageId())) {
+                    orderDetail = OrderDetail.builder().order(order).packageType(pkg).price(pkg.getPrice()).build();
+                } else {
+                    orderDetail = OrderDetail.builder().order(order).packageType(pkg).build();
+                }
+                orderDetailDTOList.add(customerOrderMapper.mapToOrderDetail(pkg, orderDetailRepository.save(orderDetail).getId()));
             }
 
             return customerOrderMapper.mapToCustomerOrderResponse(order, orderDetailDTOList);
@@ -82,22 +89,5 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             return new CustomerOrderResponseDTO();
         }
     }
-
-    @Override
-    public Double getTax(Integer year, Month month) {
-
-        LocalDate start = LocalDate.of(year, month, 1);
-        LocalDate end = start.withDayOfMonth(start.getMonth().length(start.isLeapYear()));
-
-        List<CustomerOrder> payedOrders = customerOrderRepository.getPayedOrders(start, end);
-
-        Double totalAmount = 0.0;
-        for(CustomerOrder customerOrder: payedOrders) {
-            totalAmount += customerOrder.getTotal();
-        }
-
-        return totalAmount * TAX_RATE;
-    }
-
 
 }

@@ -20,6 +20,6 @@ public class CustomerOrderRequestDTO {
     @JsonProperty("customerId")
     String customerId;
 
-    @JsonProperty("packageType")
-    String packageType;
+    @JsonProperty("packageId")
+    String packageId;
 }

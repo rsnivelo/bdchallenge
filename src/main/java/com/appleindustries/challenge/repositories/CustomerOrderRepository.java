@@ -16,6 +16,4 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, St
 
     Optional<CustomerOrder> findFirst1ByOrderByCreationDateDesc();
 
-    @Query("select co from CustomerOrder co where co.total is not null and co.creationDate between :startDate and :endDate")
-    List<CustomerOrder> getPayedOrders(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }
